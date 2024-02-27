@@ -1,0 +1,36 @@
+[
+  {
+    "activityId": "1fec4530-d572-11ee-83a8-2159f6938d65",
+    "user": {
+      "id": "4b080748-24f6-4f94-a1a0-6eb865da048d",
+      "name": "User",
+      "role": "user"
+    },
+    "bot": {
+      "id": "a32e10f0-d571-11ee-8385-63ae94c20af0",
+      "name": "Bot",
+      "role": "bot"
+    },
+    "conversation": { "id": "1fdeb0a0-d572-11ee-8385-63ae94c20af0|livechat" },
+    "channelId": "emulator",
+    "locale": "en-US",
+    "serviceUrl": "http://localhost:62688"
+  },
+  {
+    "activityId": "894d5a00-d572-11ee-83a8-2159f6938d65",
+    "user": {
+      "id": "5ea660b8-4abc-4a9e-910b-7f7617be6cab",
+      "name": "User",
+      "role": "user"
+    },
+    "bot": {
+      "id": "a32e10f0-d571-11ee-8385-63ae94c20af0",
+      "name": "Bot",
+      "role": "bot"
+    },
+    "conversation": { "id": "893fc570-d572-11ee-8385-63ae94c20af0|livechat" },
+    "channelId": "emulator",
+    "locale": "en-US",
+    "serviceUrl": "http://localhost:62688"
+  }
+]
