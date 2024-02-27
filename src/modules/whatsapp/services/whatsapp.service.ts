@@ -35,8 +35,7 @@ export class WhatsAppService implements MessagerService {
         },
         {
           headers: {
-            Authorization:
-              'Bearer EAAFyxZCRyZBk8BO7ZBV7LsRu2PTtZBJXQxneSz8ZCRMeNtyTftU14djDQUYNR4vOyd8NObDfdZA9R2EEQ6y1ZAZB25LuEbHFebkI7Om9aCJuE3qKdinIOQL4Ecfb1LoKLn9DscpA83D3xJZCYcwjsKlu7YSbg5w9Gte6xT3Rkj7KOtbrVuTjWVKzyGPuBl3pTX3PFJF14l9oVk8If1yMj5icZD',
+            Authorization: 'Bearer test',
           },
         },
       );
