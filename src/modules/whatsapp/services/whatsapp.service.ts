@@ -35,7 +35,7 @@ export class WhatsAppService implements MessagerService {
         },
         {
           headers: {
-            Authorization: 'Bearer test',
+            Authorization: `Bearer ${process.env.WHATSAPP_API_TOKEN}`,
           },
         },
       );

@@ -7,6 +7,10 @@ export class WhatsAppController {
 
   @Post('/webhook/message')
   webhookTestWhatsAppBusiness(@Query() query: any, @Body() body: any) {
+    if (!body?.entry[0]?.changes[0].value?.messages) {
+      return;
+    }
+
     this.whatsappService.receiveMessage(
       body.entry[0].changes[0].value.messages[0].from,
       body.entry[0].changes[0].value.messages[0].text.body,

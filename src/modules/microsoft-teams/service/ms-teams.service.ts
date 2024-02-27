@@ -12,6 +12,7 @@ import {
   createBotFrameworkAuthenticationFromConfiguration,
 } from 'botbuilder';
 import * as fs from 'fs';
+import { ConversarionReferenceRepository } from '../repositories/conversation-reference.repository';
 
 @Injectable()
 export class MSTeamsService extends ActivityHandler implements MessagerService {
@@ -20,6 +21,8 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
   constructor(
     @Inject(forwardRef(() => MessageSwitcherService))
     private readonly messageSwitcherService: MessageSwitcherService,
+
+    private readonly conversarionReferenceRepository: ConversarionReferenceRepository,
   ) {
     super();
 
@@ -64,10 +67,10 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
       // const replyText = `Echo: ${context.activity.text}`;
       // console.log(context);
       // await context.sendActivity(MessageFactory.text(replyText, replyText));
-      this.addConversationReference(context.activity);
+      await this.addConversationReference(context.activity);
 
       await context.sendActivity(
-        'Olá! Registrei aqui seu usuário para receber mensagens',
+        `Olá! Registrei aqui seu usuário para receber mensagens. Seu ID de usuário é: ${context.activity.from.id}`,
       );
       // By calling next() you ensure that the next BotHandler is run.
       await next();
@@ -75,12 +78,43 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
   }
 
   async sendMessage(id: string, text: string): Promise<void> {
-    const conversationReference = this.getConversationReference(id);
+    const conversationReference =
+      await this.conversarionReferenceRepository.findByUser(id);
 
-    console.log(conversationReference);
+    const {
+      activityId,
+      bot: { id: botId, name: botName, role: botRole },
+      channelId,
+      conversation: { id: conversationId },
+      locale,
+      serviceUrl,
+      user: { id: userId, name: userName, role: userRole },
+    } = conversationReference;
+
     await this.getAdapter().continueConversationAsync(
       process.env.MicrosoftAppId,
-      conversationReference,
+      {
+        activityId,
+        bot: {
+          id: botId,
+          name: botName,
+          role: botRole,
+        },
+        channelId,
+        conversation: {
+          id: conversationId,
+          isGroup: false,
+          conversationType: '',
+          name: '',
+        },
+        locale,
+        serviceUrl,
+        user: {
+          id: userId,
+          name: userName,
+          role: userRole,
+        },
+      },
       async (context) => {
         await context.sendActivity(text);
       },
@@ -104,48 +138,25 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
     const conversationReference =
       TurnContext.getConversationReference(activity);
 
-    console.log(conversationReference);
+    const {
+      activityId,
+      bot,
+      channelId,
+      conversation,
+      locale,
+      serviceUrl,
+      user,
+    } = conversationReference;
 
-    const currentReference = this.getConversationReference(
-      conversationReference.user.id,
-    );
-
-    if (!currentReference) {
-      this.addNewConversationReference(conversationReference);
-    }
-  }
-
-  private getConversationReference(userId: string) {
-    const conversationReferences = this.getConversationReferences();
-
-    return conversationReferences.find(
-      (conversationReference) => conversationReference.user.id === userId,
-    );
-  }
-
-  private getConversationReferences() {
-    const fileContent = fs.readFileSync('conversationReferences.json');
-
-    const fileText = fileContent.toString();
-
-    let arrayOfReferences: Partial<ConversationReference>[] = [];
-
-    if (fileText) {
-      arrayOfReferences = JSON.parse(fileText);
-    }
-
-    return arrayOfReferences;
-  }
-
-  private addNewConversationReference(
-    conversationReference: Partial<ConversationReference>,
-  ) {
-    const conversationReferences = this.getConversationReferences();
-
-    conversationReferences.push(conversationReference);
-    fs.writeFileSync(
-      'conversationReferences.json',
-      JSON.stringify(conversationReferences),
-    );
+    console.log('adding new');
+    await this.conversarionReferenceRepository.addNewIfNotFound({
+      activityId,
+      bot,
+      channelId,
+      conversation,
+      locale,
+      serviceUrl,
+      user,
+    });
   }
 }
