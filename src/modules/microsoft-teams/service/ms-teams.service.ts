@@ -7,7 +7,6 @@ import {
   ActivityHandler,
   CloudAdapter,
   ConfigurationServiceClientCredentialFactory,
-  ConversationReference,
   TurnContext,
   createBotFrameworkAuthenticationFromConfiguration,
 } from 'botbuilder';
