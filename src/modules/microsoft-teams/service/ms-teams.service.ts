@@ -10,7 +10,6 @@ import {
   TurnContext,
   createBotFrameworkAuthenticationFromConfiguration,
 } from 'botbuilder';
-import * as fs from 'fs';
 import { ConversarionReferenceRepository } from '../repositories/conversation-reference.repository';
 
 @Injectable()
