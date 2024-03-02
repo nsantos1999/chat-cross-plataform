@@ -21,7 +21,7 @@ export class WhatsAppService implements MessagerService {
 
   async sendMessage(phone: string, message: string) {
     try {
-      const { data } = await axios.post(
+      await axios.post(
         'https://graph.facebook.com/v18.0/240305365833042/messages',
         {
           messaging_product: 'whatsapp',
