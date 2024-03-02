@@ -28,16 +28,14 @@ export class WhatsAppService implements MessagerService {
     message: string,
     options?: MessagerServiceOption[],
   ) {
-    console.log(options);
     const interactiveContent = this.getInteractiveContent(
       options || [],
       message,
     );
 
-    console.log(interactiveContent);
     try {
       await axios.post(
-        'https://graph.facebook.com/v18.0/240305365833042/messages',
+        `https://graph.facebook.com/v18.0/${process.env.WHATSAPP_API_APP_ID}/messages`,
         {
           messaging_product: 'whatsapp',
           recipient_type: 'individual',
