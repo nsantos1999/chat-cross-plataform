@@ -5,6 +5,7 @@ import { UserRepository } from '../repositories/user.repository';
 import { validate } from 'class-validator';
 import { RegisterUserCNPJDto } from '../dtos/register-user.dtos';
 import { instanceToInstance } from 'class-transformer';
+import { QuestionToRegister } from '../@types/register.types';
 
 @Injectable()
 export class RegisterUserService {
@@ -89,18 +90,39 @@ export class RegisterUserService {
   private getQuestionToUser(
     stepToGetQuestion: UserRegisterStepsEnum,
     user: User,
-  ): string | null {
+  ): QuestionToRegister | null {
     switch (stepToGetQuestion) {
       case UserRegisterStepsEnum.ASK_NAME:
-        return 'Qual o seu nome?';
+        return {
+          question: 'Qual o seu nome?',
+        };
       case UserRegisterStepsEnum.ASK_IF_IS_CUSTOMER:
-        return `${user.name}, você é um cliente? \n\n1 - Sim\n2 - Não`;
+        return {
+          question: `${user.name}, você é um cliente?`,
+          options: [
+            {
+              id: 1,
+              title: 'Sim',
+            },
+            {
+              id: 2,
+              title: 'Não',
+            },
+          ],
+        };
       case UserRegisterStepsEnum.ASK_CNPJ:
-        return `${user.name}, me diga seu CNPJ? Pode ser formatado ou não (ex: 12.123.123/0001-12 ou 12123123000112)`;
+        return {
+          question: `${user.name}, me diga seu CNPJ? Pode ser formatado ou não (ex: 12.123.123/0001-12 ou 12123123000112)`,
+        };
       case UserRegisterStepsEnum.REGISTERED:
-        return `${user.name}, agora me diga como podemos te ajudar que iremos te encaminhar para um dos nossos atendentes disponíveis.`;
+        return {
+          question: `${user.name}, agora me diga como podemos te ajudar que iremos te encaminhar para um dos nossos atendentes disponíveis.`,
+        };
       default:
-        return 'Não podemos te atender no momento. Tente novamente mais tarde';
+        return {
+          question:
+            'Não podemos te atender no momento. Tente novamente mais tarde',
+        };
     }
   }
 

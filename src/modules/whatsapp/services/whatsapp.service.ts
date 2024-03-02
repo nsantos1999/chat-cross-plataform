@@ -1,8 +1,12 @@
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import axios from 'axios';
-import { MessagerService } from 'src/modules/message-switcher/services/messager-sender.service';
+import {
+  MessagerService,
+  MessagerServiceOption,
+} from 'src/modules/message-switcher/services/messager-sender.service';
 import { MessagerEnum } from 'src/modules/message-switcher/constants/enums/messager.enum';
 import { MessageSwitcherService } from 'src/modules/message-switcher/services/message-switcher.service';
+import { InteractiveContentButton } from '../@types/send-message-body.types';
 
 @Injectable()
 export class WhatsAppService implements MessagerService {
@@ -19,7 +23,18 @@ export class WhatsAppService implements MessagerService {
     );
   }
 
-  async sendMessage(phone: string, message: string) {
+  async sendMessage(
+    phone: string,
+    message: string,
+    options?: MessagerServiceOption[],
+  ) {
+    console.log(options);
+    const interactiveContent = this.getInteractiveContent(
+      options || [],
+      message,
+    );
+
+    console.log(interactiveContent);
     try {
       await axios.post(
         'https://graph.facebook.com/v18.0/240305365833042/messages',
@@ -27,36 +42,14 @@ export class WhatsAppService implements MessagerService {
           messaging_product: 'whatsapp',
           recipient_type: 'individual',
           to: phone,
-          type: 'text',
-          // type: 'interactive',
-          text: {
-            preview_url: true,
-            body: message,
-          },
-          // interactive: {
-          //   type: 'button',
-          //   body: {
-          //     text: 'BUTTON_TEXT',
-          //   },
-          //   action: {
-          //     buttons: [
-          //       {
-          //         type: 'reply',
-          //         reply: {
-          //           id: 'UNIQUE_BUTTON_ID_1',
-          //           title: 'BUTTON_TITLE_1',
-          //         },
-          //       },
-          //       {
-          //         type: 'reply',
-          //         reply: {
-          //           id: 'UNIQUE_BUTTON_ID_2',
-          //           title: 'BUTTON_TITLE_2',
-          //         },
-          //       },
-          //     ],
-          //   },
-          // },
+          type: interactiveContent ? 'interactive' : 'text',
+          text: !interactiveContent
+            ? {
+                preview_url: true,
+                body: message,
+              }
+            : undefined,
+          interactive: interactiveContent,
         },
         {
           headers: {
@@ -67,5 +60,37 @@ export class WhatsAppService implements MessagerService {
     } catch (err) {
       console.log(err.response);
     }
+  }
+
+  private getInteractiveContent(
+    options: MessagerServiceOption[],
+    message: string,
+  ): InteractiveContentButton | undefined {
+    const haveOptions = options.length > 0;
+
+    let interactiveContent: InteractiveContentButton | undefined = undefined;
+
+    if (haveOptions) {
+      console.log('options');
+      interactiveContent = {
+        type: 'button',
+        body: {
+          text: message,
+        },
+        action: {
+          buttons: options.map(({ id, title }) => {
+            return {
+              type: 'reply',
+              reply: {
+                id,
+                title,
+              },
+            };
+          }),
+        },
+      };
+    }
+
+    return interactiveContent;
   }
 }

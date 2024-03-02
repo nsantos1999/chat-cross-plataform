@@ -9,7 +9,7 @@ import { ConversarionReferenceRepository } from 'src/modules/microsoft-teams/rep
 
 @Injectable()
 export class MessageSwitcherService {
-  private attendantId = '072eadb1-9261-47be-9460-eae4c80f7952';
+  private attendantId = '6934888f-eed3-4f76-a9c3-1bd9508ed50c';
 
   constructor(
     @Inject(messagerSenderProvider.MessagerSender1.provide)
@@ -51,7 +51,7 @@ export class MessageSwitcherService {
     const userRegistered = this.registerUserService.userRegistered(user);
 
     if (!userRegistered) {
-      const nextQuestion =
+      const { question, options } =
         await this.registerUserService.saveDataAndReturnNextQuestion(
           user,
           message,
@@ -60,7 +60,7 @@ export class MessageSwitcherService {
             await this.whatsappService.sendMessage(phone, message),
         );
 
-      await this.whatsappService.sendMessage(phone, nextQuestion);
+      await this.whatsappService.sendMessage(phone, question, options);
 
       return;
     }
