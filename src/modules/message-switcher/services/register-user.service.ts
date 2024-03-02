@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { User } from '../schemas/user.schema';
 import { UserRegisterStepsEnum } from '../constants/enums/user-register-steps.enum';
 import { UserRepository } from '../repositories/user.repository';
@@ -6,16 +6,22 @@ import { validate } from 'class-validator';
 import { RegisterUserCNPJDto } from '../dtos/register-user.dtos';
 import { instanceToInstance } from 'class-transformer';
 import { QuestionToRegister } from '../@types/register.types';
+import { messagerSenderProvider } from '../providers/messager.provider';
+import { MessagerService } from './messager-sender.service';
 
 @Injectable()
 export class RegisterUserService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    @Inject(messagerSenderProvider.MessagerSender1.provide)
+    private readonly whatsappService: MessagerService,
+
+    private readonly userRepository: UserRepository,
+  ) {}
 
   async saveDataAndReturnNextQuestion(
     user: User,
     message: string,
     firstInteraction: boolean,
-    onError: (message: string) => Promise<void>,
   ) {
     let currentUserData = user;
 
@@ -40,7 +46,8 @@ export class RegisterUserService {
           registerStep: nextStep,
         });
       } catch (err) {
-        await onError(
+        await this.whatsappService.sendMessage(
+          String(user.phone),
           err?.message || 'Há algo de errado com os dados. Tente novamente',
         );
       }
@@ -94,7 +101,7 @@ export class RegisterUserService {
     switch (stepToGetQuestion) {
       case UserRegisterStepsEnum.ASK_NAME:
         return {
-          question: 'Qual o seu nome?',
+          question: 'Olá, como se chama?',
         };
       case UserRegisterStepsEnum.ASK_IF_IS_CUSTOMER:
         return {

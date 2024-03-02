@@ -10,7 +10,7 @@ import {
   TurnContext,
   createBotFrameworkAuthenticationFromConfiguration,
 } from 'botbuilder';
-import { ConversarionReferenceRepository } from '../repositories/conversation-reference.repository';
+import { ConversationReferenceRepository } from '../repositories/conversation-reference.repository';
 
 @Injectable()
 export class MSTeamsService extends ActivityHandler implements MessagerService {
@@ -20,7 +20,7 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
     @Inject(forwardRef(() => MessageSwitcherService))
     private readonly messageSwitcherService: MessageSwitcherService,
 
-    private readonly conversarionReferenceRepository: ConversarionReferenceRepository,
+    private readonly conversationReferenceRepository: ConversationReferenceRepository,
   ) {
     super();
 
@@ -77,7 +77,7 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
 
   async sendMessage(id: string, text: string): Promise<void> {
     const conversationReference =
-      await this.conversarionReferenceRepository.findByUser(id);
+      await this.conversationReferenceRepository.findByUser(id);
 
     const {
       activityId,
@@ -147,7 +147,7 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
     } = conversationReference;
 
     console.log('adding new');
-    await this.conversarionReferenceRepository.addNewIfNotFound({
+    await this.conversationReferenceRepository.addNewIfNotFound({
       activityId,
       bot,
       channelId,

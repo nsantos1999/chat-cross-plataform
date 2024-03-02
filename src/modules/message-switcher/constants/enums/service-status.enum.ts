@@ -1,0 +1,5 @@
+export enum ServiceStatusEnum {
+  SEARCHING_ATTENDANT = 'SEARCHING_ATTENDANT',
+  RUNNING = 'RUNNING',
+  FINISHED = 'FINISHED',
+}

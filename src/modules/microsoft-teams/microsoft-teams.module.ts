@@ -8,7 +8,7 @@ import {
   ConversationReference,
   ConversationReferenceSchema,
 } from './schemas/conversation-reference.schema';
-import { ConversarionReferenceRepository } from './repositories/conversation-reference.repository';
+import { ConversationReferenceRepository } from './repositories/conversation-reference.repository';
 
 @Module({
   imports: [
@@ -21,12 +21,12 @@ import { ConversarionReferenceRepository } from './repositories/conversation-ref
   providers: [
     MicrosoftTeamsService,
     MSTeamsService,
-    ConversarionReferenceRepository,
+    ConversationReferenceRepository,
   ],
   exports: [
     MicrosoftTeamsService,
     MSTeamsService,
-    ConversarionReferenceRepository,
+    ConversationReferenceRepository,
   ],
 })
 export class MicrosoftTeamsModule {}

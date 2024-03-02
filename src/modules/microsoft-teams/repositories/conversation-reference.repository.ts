@@ -4,7 +4,7 @@ import { ConversationReference } from '../schemas/conversation-reference.schema'
 import { Model } from 'mongoose';
 
 @Injectable()
-export class ConversarionReferenceRepository {
+export class ConversationReferenceRepository {
   constructor(
     @InjectModel(ConversationReference.name)
     private conversationReferenceModel: Model<ConversationReference>,
@@ -32,5 +32,9 @@ export class ConversarionReferenceRepository {
 
   async findByUser(userId: string) {
     return this.conversationReferenceModel.findOne({ 'user.id': userId });
+  }
+
+  async findAll() {
+    return this.conversationReferenceModel.find();
   }
 }

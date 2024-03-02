@@ -5,7 +5,8 @@ import { messagerSenderProvider } from '../providers/messager.provider';
 import { UserRepository } from '../repositories/user.repository';
 import { UserRegisterStepsEnum } from '../constants/enums/user-register-steps.enum';
 import { RegisterUserService } from './register-user.service';
-import { ConversarionReferenceRepository } from 'src/modules/microsoft-teams/repositories/conversation-reference.repository';
+import { ConversationReferenceRepository } from 'src/modules/microsoft-teams/repositories/conversation-reference.repository';
+import { CustomerServiceService } from './customer-service.service';
 
 @Injectable()
 export class MessageSwitcherService {
@@ -15,12 +16,13 @@ export class MessageSwitcherService {
     @Inject(messagerSenderProvider.MessagerSender1.provide)
     private readonly whatsappService: MessagerService,
 
-    @Inject(messagerSenderProvider.MessagerSender2.provide)
-    private readonly msTeamsService: MessagerService,
+    // @Inject(messagerSenderProvider.MessagerSender2.provide)
+    // private readonly msTeamsService: MessagerService,
 
     private readonly userRepository: UserRepository,
     private readonly registerUserService: RegisterUserService,
-    private readonly conversarionReferenceRepository: ConversarionReferenceRepository,
+    private readonly conversationReferenceRepository: ConversationReferenceRepository,
+    private readonly customerServiceService: CustomerServiceService,
   ) {}
 
   receiveMessage(id: string, message: string, from: MessagerEnum) {
@@ -56,8 +58,6 @@ export class MessageSwitcherService {
           user,
           message,
           firstInteraction,
-          async (message) =>
-            await this.whatsappService.sendMessage(phone, message),
         );
 
       await this.whatsappService.sendMessage(phone, question, options);
@@ -65,19 +65,10 @@ export class MessageSwitcherService {
       return;
     }
 
-    await this.msTeamsService.sendMessage(
-      this.attendantId,
-      `De ${user.name}: ${message}`,
-    );
+    await this.customerServiceService.receiveMessageFromCustomer(user, message);
   }
 
   private async receiveMessageFromMSTeams(id: string, message: string) {
-    const conversationReference =
-      await this.conversarionReferenceRepository.findByUser(this.attendantId);
-
-    await this.whatsappService.sendMessage(
-      '5511993933322',
-      `De ${conversationReference.user.name}: ${message}`,
-    );
+    await this.customerServiceService.receiveMessageFromAttendant(id, message);
   }
 }
