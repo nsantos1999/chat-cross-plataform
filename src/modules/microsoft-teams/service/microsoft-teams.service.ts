@@ -1,5 +1,4 @@
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
-import axios from 'axios';
 import { MessagerService } from 'src/modules/message-switcher/services/messager-sender.service';
 import { MessagerEnum } from 'src/modules/message-switcher/constants/enums/messager.enum';
 import { MessageSwitcherService } from 'src/modules/message-switcher/services/message-switcher.service';
