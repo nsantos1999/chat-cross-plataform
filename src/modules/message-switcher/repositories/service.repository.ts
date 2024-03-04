@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Service, ServiceDocument } from '../schemas/service.schema';
 import { Model } from 'mongoose';
-import { User, UserDocument } from '../schemas/user.schema';
+import { UserDocument } from '../schemas/user.schema';
 import { ServiceStatusEnum } from '../constants/enums/service-status.enum';
 
 @Injectable()

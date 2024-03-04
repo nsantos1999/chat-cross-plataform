@@ -4,7 +4,7 @@ import { User, UserDocument } from '../schemas/user.schema';
 import { ServiceStatusEnum } from '../constants/enums/service-status.enum';
 import { messagerSenderProvider } from '../providers/messager.provider';
 import { MessagerService } from './messager-sender.service';
-import { Service, ServiceDocument } from '../schemas/service.schema';
+import { ServiceDocument } from '../schemas/service.schema';
 import { ConversationReferenceRepository } from 'src/modules/microsoft-teams/repositories/conversation-reference.repository';
 import { ConversationReference } from 'src/modules/microsoft-teams/schemas/conversation-reference.schema';
 import { Cron, CronExpression } from '@nestjs/schedule';
