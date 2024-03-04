@@ -22,10 +22,10 @@ export class MicrosoftTeamsService
     super();
 
     const credentialsFactory = new ConfigurationServiceClientCredentialFactory({
-      MicrosoftAppId: process.env.MicrosoftAppId,
-      MicrosoftAppPassword: process.env.MicrosoftAppPassword,
-      MicrosoftAppType: process.env.MicrosoftAppType,
-      MicrosoftAppTenantId: process.env.MicrosoftAppTenantId,
+      MicrosoftAppId: process.env.MICROSOFT_APP_ID,
+      MicrosoftAppPassword: process.env.MICROSOFT_APP_PASSWORD,
+      MicrosoftAppType: process.env.MICROSOFT_APP_TYPE,
+      MicrosoftAppTenantId: process.env.MICROSOFT_APP_TENANT_ID,
     });
 
     const botFrameworkAuthentication =

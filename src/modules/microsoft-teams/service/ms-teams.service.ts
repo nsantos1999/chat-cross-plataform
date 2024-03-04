@@ -25,10 +25,10 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
     super();
 
     const credentialsFactory = new ConfigurationServiceClientCredentialFactory({
-      MicrosoftAppId: process.env.MicrosoftAppId,
-      MicrosoftAppPassword: process.env.MicrosoftAppPassword,
-      MicrosoftAppType: process.env.MicrosoftAppType,
-      MicrosoftAppTenantId: process.env.MicrosoftAppTenantId,
+      MicrosoftAppId: process.env.MICROSOFT_APP_ID,
+      MicrosoftAppPassword: process.env.MICROSOFT_APP_PASSWORD,
+      MicrosoftAppType: process.env.MICROSOFT_APP_TYPE,
+      MicrosoftAppTenantId: process.env.MICROSOFT_APP_TENANT_ID,
     });
 
     const botFrameworkAuthentication =
@@ -52,6 +52,7 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
   startListeners() {
     // See https://aka.ms/about-bot-activity-message to learn more about the message and other activity types.
     this.onMessage(async (context, next) => {
+      console.log('received message');
       // const replyText = `Echo: ${context.activity.text}`;
       // console.log(context);
       // await context.sendActivity(MessageFactory.text(replyText, replyText));
@@ -89,8 +90,25 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
       user: { id: userId, name: userName, role: userRole },
     } = conversationReference;
 
+    console.log({
+      activityId,
+      bot: {
+        id: botId,
+        name: botName,
+      },
+      channelId,
+      conversation: {
+        id: conversationId,
+      },
+      locale,
+      serviceUrl,
+      user: {
+        id: userId,
+      },
+    });
+
     await this.getAdapter().continueConversationAsync(
-      process.env.MicrosoftAppId,
+      process.env.MICROSOFT_APP_ID,
       {
         activityId,
         bot: {
@@ -146,7 +164,7 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
       user,
     } = conversationReference;
 
-    console.log('adding new');
+    console.log('adding new', conversationReference);
     await this.conversationReferenceRepository.addNewIfNotFound({
       activityId,
       bot,

@@ -6,14 +6,14 @@ import { MSTeamsService } from '../service/ms-teams.service';
 @Controller('teams')
 export class MicrosoftTeamsController {
   constructor(
-    private readonly microsoftTeamsService: MicrosoftTeamsService,
-    private readonly whatsApp2Service: MSTeamsService,
+    private readonly _: MicrosoftTeamsService,
+    private readonly msTeamsService: MSTeamsService,
   ) {}
 
   @Post('message')
   async message(@Req() req: Request, @Res() res: Response) {
-    await this.whatsApp2Service
+    await this.msTeamsService
       .getAdapter()
-      .process(req, res, (context) => this.whatsApp2Service.run(context));
+      .process(req, res, (context) => this.msTeamsService.run(context));
   }
 }
