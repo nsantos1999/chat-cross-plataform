@@ -10,6 +10,8 @@ import { RegisterUserService } from './services/register-user.service';
 import { Service, ServiceSchema } from './schemas/service.schema';
 import { CustomerServiceService } from './services/customer-service.service';
 import { ServiceRepository } from './repositories/service.repository';
+import { Message, MessageSchema } from './schemas/message.schema';
+import { MessageRepository } from './repositories/message.repository';
 // import { WhatsAppService } from '../whatsapp/services/whatsapp.service';
 // import { MicrosoftTeamsService } from '../microsoft-teams/service/microsoft-teams.service';
 
@@ -22,8 +24,9 @@ import { ServiceRepository } from './repositories/service.repository';
     messagerSenderProvider.MessagerSender1,
     messagerSenderProvider.MessagerSender2,
     UserRepository,
-    RegisterUserService,
+    MessageRepository,
     ServiceRepository,
+    RegisterUserService,
     CustomerServiceService,
   ],
   exports: [MessageSwitcherService],
@@ -33,6 +36,7 @@ import { ServiceRepository } from './repositories/service.repository';
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: Service.name, schema: ServiceSchema },
+      { name: Message.name, schema: MessageSchema },
     ]),
   ],
 })

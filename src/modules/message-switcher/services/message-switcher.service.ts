@@ -7,6 +7,7 @@ import { UserRegisterStepsEnum } from '../constants/enums/user-register-steps.en
 import { RegisterUserService } from './register-user.service';
 import { ConversationReferenceRepository } from 'src/modules/microsoft-teams/repositories/conversation-reference.repository';
 import { CustomerServiceService } from './customer-service.service';
+import { MessageRepository } from '../repositories/message.repository';
 
 @Injectable()
 export class MessageSwitcherService {
@@ -21,7 +22,6 @@ export class MessageSwitcherService {
 
     private readonly userRepository: UserRepository,
     private readonly registerUserService: RegisterUserService,
-    private readonly conversationReferenceRepository: ConversationReferenceRepository,
     private readonly customerServiceService: CustomerServiceService,
   ) {}
 

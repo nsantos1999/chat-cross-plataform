@@ -8,6 +8,8 @@ import { ServiceDocument } from '../schemas/service.schema';
 import { ConversationReferenceRepository } from 'src/modules/microsoft-teams/repositories/conversation-reference.repository';
 import { ConversationReference } from 'src/modules/microsoft-teams/schemas/conversation-reference.schema';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { MessageRepository } from '../repositories/message.repository';
+import { MessagerEnum } from '../constants/enums/messager.enum';
 
 @Injectable()
 export class CustomerServiceService {
@@ -19,8 +21,8 @@ export class CustomerServiceService {
     private readonly msTeamsService: MessagerService,
 
     private readonly serviceRepository: ServiceRepository,
-
     private readonly conversationReferenceRepository: ConversationReferenceRepository,
+    private readonly messageRepository: MessageRepository,
   ) {}
 
   async receiveMessageFromCustomer(customer: UserDocument, message: string) {
@@ -29,6 +31,13 @@ export class CustomerServiceService {
     if (!openedService) {
       return this.openService(customer, message);
     }
+
+    await this.messageRepository.register({
+      from: MessagerEnum.WHATSAPP,
+      service: openedService,
+      text: message,
+      customer: openedService.customer,
+    });
 
     return this.redirectMessageToAttendant(
       customer,
@@ -48,6 +57,13 @@ export class CustomerServiceService {
       return;
     }
 
+    await this.messageRepository.register({
+      from: MessagerEnum.MS_TEAMS,
+      service: openedService,
+      text: message,
+      attendantId: openedService.attendantId,
+      attendantName: openedService.attendantName,
+    });
     return this.redirectMessageToCustomer(
       openedService.attendantName,
       message,
@@ -101,7 +117,7 @@ export class CustomerServiceService {
 
     await this.searchAttendant(service);
 
-    return;
+    return service;
   }
 
   private async searchAttendant(service: ServiceDocument) {
