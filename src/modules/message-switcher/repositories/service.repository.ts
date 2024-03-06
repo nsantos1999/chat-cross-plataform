@@ -4,25 +4,28 @@ import { Service, ServiceDocument } from '../schemas/service.schema';
 import { Model } from 'mongoose';
 import { UserDocument } from '../schemas/user.schema';
 import { ServiceStatusEnum } from '../constants/enums/service-status.enum';
+import { ServiceAttendantsHistoriesRepository } from './service-attendant-histories.repository';
 
 @Injectable()
 export class ServiceRepository {
   constructor(
     @InjectModel(Service.name)
     private serviceModel: Model<Service>,
+
+    private serviceAttendantsHistoriesRepository: ServiceAttendantsHistoriesRepository,
   ) {}
 
   createNew(service: Service) {
     return this.serviceModel.create(service);
   }
 
-  startService(
+  async startService(
     service: ServiceDocument,
     attendant: { attendantId: string; attendantName: string },
   ) {
     const { attendantId, attendantName } = attendant;
-    console.log('start service');
-    return this.serviceModel.updateOne(
+
+    const startedService = await this.serviceModel.updateOne(
       { _id: service._id },
       {
         attendantId,
@@ -30,6 +33,15 @@ export class ServiceRepository {
         status: ServiceStatusEnum.RUNNING,
       },
     );
+
+    await this.serviceAttendantsHistoriesRepository.registerNewAttendant(
+      service,
+      attendantId,
+      attendantName,
+      'mocked-sector',
+    );
+
+    return startedService;
   }
 
   getOpenedServiceByCustomer(customer: UserDocument) {

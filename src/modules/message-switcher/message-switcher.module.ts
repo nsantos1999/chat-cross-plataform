@@ -12,6 +12,11 @@ import { CustomerServiceService } from './services/customer-service.service';
 import { ServiceRepository } from './repositories/service.repository';
 import { Message, MessageSchema } from './schemas/message.schema';
 import { MessageRepository } from './repositories/message.repository';
+import {
+  ServiceAttendantsHistories,
+  ServiceAttendantsHistoriesSchema,
+} from './schemas/service-attendant-histories.schema';
+import { ServiceAttendantsHistoriesRepository } from './repositories/service-attendant-histories.repository';
 // import { WhatsAppService } from '../whatsapp/services/whatsapp.service';
 // import { MicrosoftTeamsService } from '../microsoft-teams/service/microsoft-teams.service';
 
@@ -28,6 +33,7 @@ import { MessageRepository } from './repositories/message.repository';
     ServiceRepository,
     RegisterUserService,
     CustomerServiceService,
+    ServiceAttendantsHistoriesRepository,
   ],
   exports: [MessageSwitcherService],
   imports: [
@@ -37,6 +43,10 @@ import { MessageRepository } from './repositories/message.repository';
       { name: User.name, schema: UserSchema },
       { name: Service.name, schema: ServiceSchema },
       { name: Message.name, schema: MessageSchema },
+      {
+        name: ServiceAttendantsHistories.name,
+        schema: ServiceAttendantsHistoriesSchema,
+      },
     ]),
   ],
 })
