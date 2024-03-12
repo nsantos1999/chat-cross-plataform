@@ -15,6 +15,10 @@ export class WhatsAppService implements MessagerService {
     private readonly messageSwitcherService: MessageSwitcherService,
   ) {}
 
+  sendFile(id: string, file: File): Promise<void> {
+    throw new Error('Method not implemented.');
+  }
+
   async receiveMessage(phone: string, message: string) {
     this.messageSwitcherService.receiveMessage(
       phone,

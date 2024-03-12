@@ -15,6 +15,7 @@ export class ServiceAttendantsHistoriesRepository {
     service: ServiceDocument,
     attendantId: string,
     attendantName: string,
+    attendantAadObjectId: string,
     sector: string,
   ) {
     const servicesHistories = await this.findByService(service._id);
@@ -24,6 +25,7 @@ export class ServiceAttendantsHistoriesRepository {
     return this.serviceAttendantsHistoriesModel.create({
       attendantId,
       attendantName,
+      attendantAadObjectId,
       round: servicesHistories.length + 1,
       sector,
       service,

@@ -9,5 +9,6 @@ export interface MessagerService {
     text: string,
     options?: MessagerServiceOption[],
   ): Promise<void>;
+  sendFile(id: string, file: File): Promise<void>;
   receiveMessage(id: string, text: string): Promise<void>;
 }

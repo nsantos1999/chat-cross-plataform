@@ -18,6 +18,9 @@ export class Service {
   attendantName?: string;
 
   @Prop()
+  attendantAadObjectId?: string;
+
+  @Prop()
   sector?: string;
 
   @Prop({ enum: ServiceStatusEnum })

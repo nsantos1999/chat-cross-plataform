@@ -9,6 +9,8 @@ import {
   ConversationReferenceSchema,
 } from './schemas/conversation-reference.schema';
 import { ConversationReferenceRepository } from './repositories/conversation-reference.repository';
+import { MSTeamsApiGraphService } from './service/ms-teams-api-graph.service';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -22,11 +24,14 @@ import { ConversationReferenceRepository } from './repositories/conversation-ref
     MicrosoftTeamsService,
     MSTeamsService,
     ConversationReferenceRepository,
+    MSTeamsApiGraphService,
+    ConfigService,
   ],
   exports: [
     MicrosoftTeamsService,
     MSTeamsService,
     ConversationReferenceRepository,
+    MSTeamsApiGraphService,
   ],
 })
 export class MicrosoftTeamsModule {}

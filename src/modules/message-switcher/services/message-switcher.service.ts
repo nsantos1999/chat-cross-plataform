@@ -5,20 +5,18 @@ import { messagerSenderProvider } from '../providers/messager.provider';
 import { UserRepository } from '../repositories/user.repository';
 import { UserRegisterStepsEnum } from '../constants/enums/user-register-steps.enum';
 import { RegisterUserService } from './register-user.service';
-import { ConversationReferenceRepository } from 'src/modules/microsoft-teams/repositories/conversation-reference.repository';
 import { CustomerServiceService } from './customer-service.service';
-import { MessageRepository } from '../repositories/message.repository';
+import { possibleCommands } from '../constants/possible-commands';
+import { MappedCommands } from '../constants/enums/mapped-commands.enum';
 
 @Injectable()
 export class MessageSwitcherService {
-  private attendantId = '6934888f-eed3-4f76-a9c3-1bd9508ed50c';
-
   constructor(
     @Inject(messagerSenderProvider.MessagerSender1.provide)
     private readonly whatsappService: MessagerService,
 
-    // @Inject(messagerSenderProvider.MessagerSender2.provide)
-    // private readonly msTeamsService: MessagerService,
+    @Inject(messagerSenderProvider.MessagerSender2.provide)
+    private readonly msTeamsService: MessagerService,
 
     private readonly userRepository: UserRepository,
     private readonly registerUserService: RegisterUserService,
@@ -69,6 +67,68 @@ export class MessageSwitcherService {
   }
 
   private async receiveMessageFromMSTeams(id: string, message: string) {
-    await this.customerServiceService.receiveMessageFromAttendant(id, message);
+    const messageCleaned = message.trim();
+
+    const { isCommand, command, extraDataCommand } =
+      this.isCommand(messageCleaned);
+
+    if (isCommand) {
+      await this.executeCommandAction(command, extraDataCommand, id);
+    } else {
+      await this.customerServiceService.receiveMessageFromAttendant(
+        id,
+        messageCleaned,
+      );
+    }
+  }
+
+  private isCommand(message: string) {
+    const splittedMessage = message.split(' ');
+
+    const firstWord = splittedMessage[0];
+
+    const isCommand = possibleCommands.includes(firstWord as MappedCommands);
+
+    const command = isCommand
+      ? possibleCommands.find(
+          (possibleCommand) =>
+            possibleCommand === (firstWord as MappedCommands),
+        )
+      : null;
+
+    const extraDataCommand = isCommand
+      ? message.replace(firstWord, '').trim()
+      : null;
+
+    return {
+      isCommand,
+      command,
+      extraDataCommand,
+    };
+  }
+
+  private async executeCommandAction(
+    command: MappedCommands,
+    extraDataCommand: string,
+    attendantId: string,
+  ) {
+    switch (command) {
+      case MappedCommands.FINISH_SERVICE:
+        return this.customerServiceService.finishService(attendantId);
+      case MappedCommands.LIST_AVAILABLE_ATTENDANTS:
+        return this.customerServiceService.listAvailableAttendants(attendantId);
+      case MappedCommands.GET_MESSAGES_SERVICE:
+        return this.msTeamsService.sendFile(attendantId, null);
+      case MappedCommands.TRANSFER_SERVICE:
+        return this.customerServiceService.transferService(
+          attendantId,
+          extraDataCommand,
+        );
+      default:
+        return this.msTeamsService.sendMessage(
+          attendantId,
+          `O comando ${command} ainda está indisponível`,
+        );
+    }
   }
 }

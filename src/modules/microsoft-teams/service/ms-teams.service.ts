@@ -7,10 +7,14 @@ import {
   ActivityHandler,
   CloudAdapter,
   ConfigurationServiceClientCredentialFactory,
+  ConversationReference,
   TurnContext,
   createBotFrameworkAuthenticationFromConfiguration,
 } from 'botbuilder';
 import { ConversationReferenceRepository } from '../repositories/conversation-reference.repository';
+import { ConversationReferenceDocument } from '../schemas/conversation-reference.schema';
+import { MSTeamsApiGraphService } from './ms-teams-api-graph.service';
+import { GetUsersStatusDto } from '../dtos/get-users-status.dto';
 
 @Injectable()
 export class MSTeamsService extends ActivityHandler implements MessagerService {
@@ -21,6 +25,7 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
     private readonly messageSwitcherService: MessageSwitcherService,
 
     private readonly conversationReferenceRepository: ConversationReferenceRepository,
+    private readonly msTeamsApiGraphService: MSTeamsApiGraphService,
   ) {
     super();
 
@@ -52,10 +57,12 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
   startListeners() {
     // See https://aka.ms/about-bot-activity-message to learn more about the message and other activity types.
     this.onMessage(async (context, next) => {
-      console.log('received message');
+      console.log('received message', context.activity.text);
       // const replyText = `Echo: ${context.activity.text}`;
       // console.log(context);
       // await context.sendActivity(MessageFactory.text(replyText, replyText));
+      await this.addConversationReference(context.activity);
+
       this.receiveMessage(context.activity.from.id, context.activity.text);
 
       // By calling next() you ensure that the next BotHandler is run.
@@ -66,11 +73,21 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
       // const replyText = `Echo: ${context.activity.text}`;
       // console.log(context);
       // await context.sendActivity(MessageFactory.text(replyText, replyText));
+
       await this.addConversationReference(context.activity);
 
       await context.sendActivity(
         `Olá! Registrei aqui seu usuário para receber mensagens. Seu ID de usuário é: ${context.activity.from.id}`,
       );
+      // By calling next() you ensure that the next BotHandler is run.
+      await next();
+    });
+    this.onCommand(async (context, next) => {
+      console.log('received command');
+      // const replyText = `Echo: ${context.activity.text}`;
+      // console.log(context);
+      // await context.sendActivity(MessageFactory.text(replyText, replyText));
+      console.log(context.activity);
       // By calling next() you ensure that the next BotHandler is run.
       await next();
     });
@@ -80,59 +97,18 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
     const conversationReference =
       await this.conversationReferenceRepository.findByUser(id);
 
-    const {
-      activityId,
-      bot: { id: botId, name: botName, role: botRole },
-      channelId,
-      conversation: { id: conversationId },
-      locale,
-      serviceUrl,
-      user: { id: userId, name: userName, role: userRole },
-    } = conversationReference;
-
-    console.log({
-      activityId,
-      bot: {
-        id: botId,
-        name: botName,
-      },
-      channelId,
-      conversation: {
-        id: conversationId,
-      },
-      locale,
-      serviceUrl,
-      user: {
-        id: userId,
-      },
-    });
-
+    // let message = '';
+    // Array.from(Array(100).keys()).forEach((_) => {
+    //   message +=
+    //     '<br/><br/>Cliente falou: Olá<br /> 11/03/2024 11:40 <br/><br/>Atendente falou: Posso te ajudar?<br /> 11/03/2024 11:41';
+    // });
     await this.getAdapter().continueConversationAsync(
       process.env.MICROSOFT_APP_ID,
-      {
-        activityId,
-        bot: {
-          id: botId,
-          name: botName,
-          role: botRole,
-        },
-        channelId,
-        conversation: {
-          id: conversationId,
-          isGroup: false,
-          conversationType: '',
-          name: '',
-        },
-        locale,
-        serviceUrl,
-        user: {
-          id: userId,
-          name: userName,
-          role: userRole,
-        },
-      },
+      this.prepareConversationReference(conversationReference),
       async (context) => {
-        await context.sendActivity(text);
+        await context.sendActivity({
+          text,
+        });
       },
     );
 
@@ -140,6 +116,28 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
     //   await context.sendActivity(text);
     // });
     // throw new Error('Method not implemented.');
+  }
+
+  async sendFile(id: string, file: File): Promise<void> {
+    const conversationReference =
+      await this.conversationReferenceRepository.findByUser(id);
+
+    await this.getAdapter().continueConversationAsync(
+      process.env.MICROSOFT_APP_ID,
+      this.prepareConversationReference(conversationReference),
+      async (context) => {
+        await context.sendActivity({
+          attachments: [
+            {
+              contentType: 'image/png',
+              contentUrl:
+                'https://ascenty.com/wp-content/uploads/2023/11/1473061_Ascenty_Artigo-12_Mudancas-no-ambiente-cloudcapa-blog-1920x1000-c-default.png',
+              name: 'Cloud-png.png',
+            },
+          ],
+        });
+      },
+    );
   }
 
   async receiveMessage(id: string, message: string) {
@@ -164,7 +162,8 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
       user,
     } = conversationReference;
 
-    console.log('adding new', conversationReference);
+    console.log(user);
+
     await this.conversationReferenceRepository.addNewIfNotFound({
       activityId,
       bot,
@@ -174,5 +173,51 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
       serviceUrl,
       user,
     });
+  }
+
+  prepareConversationReference(
+    conversationReferenceDocument: ConversationReferenceDocument,
+  ) {
+    const {
+      activityId,
+      bot: { id: botId, name: botName, role: botRole },
+      channelId,
+      conversation: { id: conversationId },
+      locale,
+      serviceUrl,
+      user: {
+        id: userId,
+        name: userName,
+        role: userRole,
+        aadObjectId: userAadObjectId,
+      },
+    } = conversationReferenceDocument;
+
+    console.log(conversationReferenceDocument.user);
+    const conversationReference: Partial<ConversationReference> = {
+      activityId,
+      bot: {
+        id: botId,
+        name: botName,
+        role: botRole,
+      },
+      channelId,
+      conversation: {
+        id: conversationId,
+        isGroup: false,
+        conversationType: '',
+        name: '',
+      },
+      locale,
+      serviceUrl,
+      user: {
+        id: userId,
+        name: userName,
+        role: userRole,
+        aadObjectId: userAadObjectId,
+      },
+    };
+
+    return conversationReference;
   }
 }

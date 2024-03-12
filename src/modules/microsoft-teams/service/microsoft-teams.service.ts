@@ -41,7 +41,6 @@ export class MicrosoftTeamsService
     this.startListeners();
     // console.log(this.adapter);
   }
-
   getAdapter() {
     return this.adapter;
   }
@@ -64,6 +63,10 @@ export class MicrosoftTeamsService
       await context.sendActivity(text);
     });
     // throw new Error('Method not implemented.');
+  }
+
+  sendFile(id: string, file: File): Promise<void> {
+    throw new Error('Method not implemented.');
   }
 
   async receiveMessage(id: string, message: string) {

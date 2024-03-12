@@ -14,6 +14,9 @@ export class ServiceAttendantsHistories {
   attendantName: string;
 
   @Prop()
+  attendantAadObjectId?: string;
+
+  @Prop()
   sector: string;
 
   @Prop()

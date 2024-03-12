@@ -12,6 +12,7 @@ export class ConversationReference {
       id: { type: String },
       name: { type: String },
       role: { type: String },
+      aadObjectId: { type: String },
     },
   })
   'user': ChannelAccount;

@@ -31,7 +31,9 @@ export class ConversationReferenceRepository {
   }
 
   async findByUser(userId: string) {
-    return this.conversationReferenceModel.findOne({ 'user.id': userId });
+    return this.conversationReferenceModel.findOne({
+      $or: [{ 'user.id': userId }, { 'user.aadObjectId': userId }],
+    });
   }
 
   async findAll() {

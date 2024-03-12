@@ -18,6 +18,9 @@ export class Message {
   @Prop()
   attendantName?: string;
 
+  @Prop()
+  attendantAadObjectId?: string;
+
   @Prop({ type: Types.ObjectId, ref: Service.name })
   service: Service;
 
