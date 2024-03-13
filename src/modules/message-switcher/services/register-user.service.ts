@@ -8,6 +8,7 @@ import { instanceToInstance } from 'class-transformer';
 import { QuestionToRegister } from '../@types/register.types';
 import { messagerSenderProvider } from '../providers/messager.provider';
 import { MessagerService } from './messager-sender.service';
+import { PresenterUtils } from 'src/utils/presenter.utils';
 
 @Injectable()
 export class RegisterUserService {
@@ -101,7 +102,7 @@ export class RegisterUserService {
     switch (stepToGetQuestion) {
       case UserRegisterStepsEnum.ASK_NAME:
         return {
-          question: 'Olá, como se chama?',
+          question: `Olá, ${PresenterUtils.presenterPeriodGreeting().toLowerCase()}, como se chama?`,
         };
       case UserRegisterStepsEnum.ASK_IF_IS_CUSTOMER:
         return {
@@ -123,7 +124,7 @@ export class RegisterUserService {
         };
       case UserRegisterStepsEnum.REGISTERED:
         return {
-          question: `${user.name}, agora me diga como podemos te ajudar que iremos te encaminhar para um dos nossos atendentes disponíveis.`,
+          question: `${user.name}, agora me diga como podemos te ajudar que irei te encaminhar para um dos nossos atendentes disponíveis.`,
         };
       default:
         return {
@@ -151,12 +152,12 @@ export class RegisterUserService {
           registerStep: userRegisterStep,
         });
       case UserRegisterStepsEnum.ASK_CNPJ:
-        const { cpnj } = await this.validateInputRegisterData(
-          new RegisterUserCNPJDto({ cpnj: message }),
+        const { cnpj } = await this.validateInputRegisterData(
+          new RegisterUserCNPJDto({ cnpj: message }),
         );
 
         return this.userRepository.updateByPhone(phone, {
-          cnpj: Number(cpnj),
+          cnpj: Number(cnpj),
           registerStep: userRegisterStep,
         });
       default:

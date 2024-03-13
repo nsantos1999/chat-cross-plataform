@@ -17,9 +17,6 @@ export class ServiceAttendantsHistories {
   attendantAadObjectId?: string;
 
   @Prop()
-  sector: string;
-
-  @Prop()
   round: number;
 
   @Prop()

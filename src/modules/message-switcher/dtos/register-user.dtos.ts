@@ -7,11 +7,11 @@ export class RegisterUserCNPJDto {
   @Length(14, 14, {
     message: 'CNPJ no formato incorreto',
   })
-  cpnj: string;
+  cnpj: string;
 
   constructor(data?: RegisterUserCNPJDto) {
     if (data) {
-      this.cpnj = data.cpnj;
+      this.cnpj = data.cnpj;
     }
   }
 }

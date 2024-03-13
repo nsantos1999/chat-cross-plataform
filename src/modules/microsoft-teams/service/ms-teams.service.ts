@@ -1,20 +1,26 @@
 import { Inject, Injectable, forwardRef } from '@nestjs/common';
-import { MessagerService } from 'src/modules/message-switcher/services/messager-sender.service';
+import {
+  MessagerService,
+  MessagerServiceOption,
+} from 'src/modules/message-switcher/services/messager-sender.service';
 import { MessagerEnum } from 'src/modules/message-switcher/constants/enums/messager.enum';
 import { MessageSwitcherService } from 'src/modules/message-switcher/services/message-switcher.service';
 import {
+  ActionTypes,
   Activity,
   ActivityHandler,
+  CardAction,
+  CardFactory,
   CloudAdapter,
   ConfigurationServiceClientCredentialFactory,
   ConversationReference,
+  MessageFactory,
   TurnContext,
   createBotFrameworkAuthenticationFromConfiguration,
 } from 'botbuilder';
 import { ConversationReferenceRepository } from '../repositories/conversation-reference.repository';
 import { ConversationReferenceDocument } from '../schemas/conversation-reference.schema';
-import { MSTeamsApiGraphService } from './ms-teams-api-graph.service';
-import { GetUsersStatusDto } from '../dtos/get-users-status.dto';
+import { MappedCommands } from 'src/modules/message-switcher/constants/enums/mapped-commands.enum';
 
 @Injectable()
 export class MSTeamsService extends ActivityHandler implements MessagerService {
@@ -25,7 +31,6 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
     private readonly messageSwitcherService: MessageSwitcherService,
 
     private readonly conversationReferenceRepository: ConversationReferenceRepository,
-    private readonly msTeamsApiGraphService: MSTeamsApiGraphService,
   ) {
     super();
 
@@ -63,7 +68,10 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
       // await context.sendActivity(MessageFactory.text(replyText, replyText));
       await this.addConversationReference(context.activity);
 
-      this.receiveMessage(context.activity.from.id, context.activity.text);
+      this.receiveMessage(
+        context.activity.from.id,
+        context.activity?.value?.option || context.activity.text,
+      );
 
       // By calling next() you ensure that the next BotHandler is run.
       await next();
@@ -93,22 +101,26 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
     });
   }
 
-  async sendMessage(id: string, text: string): Promise<void> {
+  async sendMessage(
+    id: string,
+    text: string,
+    options?: MessagerServiceOption[],
+  ): Promise<void> {
     const conversationReference =
       await this.conversationReferenceRepository.findByUser(id);
 
-    // let message = '';
-    // Array.from(Array(100).keys()).forEach((_) => {
-    //   message +=
-    //     '<br/><br/>Cliente falou: Olá<br /> 11/03/2024 11:40 <br/><br/>Atendente falou: Posso te ajudar?<br /> 11/03/2024 11:41';
-    // });
     await this.getAdapter().continueConversationAsync(
       process.env.MICROSOFT_APP_ID,
       this.prepareConversationReference(conversationReference),
       async (context) => {
-        await context.sendActivity({
-          text,
-        });
+        if (options && options.length > 0) {
+          await context.sendActivity({
+            attachments: [this.buildAdaptiveCardWithOptions(text, options)],
+          });
+          return;
+        }
+
+        await context.sendActivity(text);
       },
     );
 
@@ -148,6 +160,39 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
     );
   }
 
+  private buildAdaptiveCardWithOptions(
+    text: string,
+    options?: MessagerServiceOption[],
+  ) {
+    const adaptiveCard = {
+      $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
+      appId: process.env.MicrosoftAppId,
+      body: [
+        {
+          type: 'TextBlock',
+          size: 'Medium',
+          weight: 'Bolder',
+          text,
+        },
+        {
+          type: 'ActionSet',
+          actions: options.map((option) => ({
+            type: 'Action.Submit',
+            // verb: 'choose_category',
+            title: option.title,
+            data: {
+              option: `${MappedCommands.TRANSFER_SERVICE} ${option.id}`,
+            },
+          })),
+        },
+      ],
+      type: 'AdaptiveCard',
+      version: '1.4',
+    };
+
+    return CardFactory.adaptiveCard(adaptiveCard);
+  }
+
   private async addConversationReference(activity: Activity) {
     const conversationReference =
       TurnContext.getConversationReference(activity);
@@ -175,7 +220,7 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
     });
   }
 
-  prepareConversationReference(
+  private prepareConversationReference(
     conversationReferenceDocument: ConversationReferenceDocument,
   ) {
     const {
@@ -193,7 +238,6 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
       },
     } = conversationReferenceDocument;
 
-    console.log(conversationReferenceDocument.user);
     const conversationReference: Partial<ConversationReference> = {
       activityId,
       bot: {

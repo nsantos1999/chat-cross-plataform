@@ -5,4 +5,5 @@ export const possibleCommands = [
   MappedCommands.LIST_AVAILABLE_ATTENDANTS,
   MappedCommands.GET_MESSAGES_SERVICE,
   MappedCommands.TRANSFER_SERVICE,
+  MappedCommands.REGISTER_CUSTOMER,
 ];

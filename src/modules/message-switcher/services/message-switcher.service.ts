@@ -117,6 +117,11 @@ export class MessageSwitcherService {
         return this.customerServiceService.finishService(attendantId);
       case MappedCommands.LIST_AVAILABLE_ATTENDANTS:
         return this.customerServiceService.listAvailableAttendants(attendantId);
+      case MappedCommands.REGISTER_CUSTOMER:
+        return this.customerServiceService.registerCustomer(
+          attendantId,
+          extraDataCommand,
+        );
       case MappedCommands.GET_MESSAGES_SERVICE:
         return this.msTeamsService.sendFile(attendantId, null);
       case MappedCommands.TRANSFER_SERVICE:

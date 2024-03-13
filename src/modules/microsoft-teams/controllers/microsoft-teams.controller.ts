@@ -19,27 +19,12 @@ export class MicrosoftTeamsController {
       .process(req, res, (context) => this.msTeamsService.run(context));
   }
 
-  @Get('users')
-  async getUsers() {
-    return await this.msTeamsApiGraphService.getUsers();
-  }
-
-  @Post('group')
-  async createGroup() {
-    const members = [
-      {
-        id: '28:8fe18cc0-1677-4d48-8f1d-58b83e5e6029',
-        name: 'Bot',
-      },
-      {
-        id: '29:1qHWJ7LvTVtaTimfNgt7Ywmz7w9AbRCCzQE5qnzQeRc0aInsdlA8CDAMlZ_xySvrvGQ5vc1troZn6Sdrf8YN0Ig',
-        name: 'Natã Santos',
-      },
-    ];
-    await this.msTeamsApiGraphService.createGroup(
-      'Atendimento de Natã Souza',
-      'Natã Souza Precisa de atendimento',
-      members,
+  @Get('/group/members')
+  async getGroupMembers() {
+    // 9a5ca47c-031b-44d6-a3fc-2e4580409cb2 - testeexpanso@rmfarma.com.br
+    // a2dc799a-885c-4afa-89b3-e44c738bef60 - testeatendimento@rmfarma.com.br
+    return this.msTeamsApiGraphService.getGroupMembers(
+      '9a5ca47c-031b-44d6-a3fc-2e4580409cb2',
     );
   }
 }

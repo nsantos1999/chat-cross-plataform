@@ -21,7 +21,7 @@ export class Service {
   attendantAadObjectId?: string;
 
   @Prop()
-  sector?: string;
+  serviceGroupId?: string;
 
   @Prop({ enum: ServiceStatusEnum })
   status: ServiceStatusEnum;

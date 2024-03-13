@@ -46,7 +46,6 @@ export class ServiceRepository {
       attendantId,
       attendantName,
       attendantAadObjectId,
-      'mocked-sector',
     );
 
     return startedService;
@@ -88,7 +87,6 @@ export class ServiceRepository {
       attendantId,
       attendantName,
       attendantAadObjectId,
-      'mocked-sector',
     );
 
     return startedService;

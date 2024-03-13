@@ -36,7 +36,13 @@ export class ConversationReferenceRepository {
     });
   }
 
-  async findAll() {
+  async findAll(attendantsFilteredIds?: string[]) {
+    if (attendantsFilteredIds && attendantsFilteredIds.length > 0) {
+      return this.conversationReferenceModel.find({
+        'user.aadObjectId': { $in: attendantsFilteredIds },
+      });
+    }
+
     return this.conversationReferenceModel.find();
   }
 }

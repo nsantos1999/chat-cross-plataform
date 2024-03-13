@@ -16,6 +16,12 @@ import { MessagerEnum } from '../constants/enums/messager.enum';
 import { UserStatus } from 'src/modules/microsoft-teams/constants/enums/user-status.enum';
 import { MSTeamsApiGraphService } from 'src/modules/microsoft-teams/service/ms-teams-api-graph.service';
 import { ChannelAccount } from 'botbuilder';
+import { ServiceGroupsIdsEnum } from '../constants/enums/service-groups-ids.enum';
+import { instanceToInstance } from 'class-transformer';
+import { RegisterUserCNPJDto } from '../dtos/register-user.dtos';
+import { validate } from 'class-validator';
+import { UserRepository } from '../repositories/user.repository';
+import { MaskUtil } from 'src/utils/mask.utils';
 
 @Injectable()
 export class CustomerServiceService {
@@ -30,6 +36,7 @@ export class CustomerServiceService {
     private readonly conversationReferenceRepository: ConversationReferenceRepository,
     private readonly messageRepository: MessageRepository,
     private readonly msTeamsApiGraphService: MSTeamsApiGraphService,
+    private readonly userRepository: UserRepository,
   ) {}
 
   async receiveMessageFromCustomer(customer: UserDocument, message: string) {
@@ -103,7 +110,7 @@ export class CustomerServiceService {
 
     await this.whatsappService.sendMessage(
       String(openedService.customer.phone),
-      'O atendimento foi finalizado pelo atendente.',
+      `Seu atendimento foi encessado por ${openedService.attendantName}.`,
     );
   }
 
@@ -118,17 +125,14 @@ export class CustomerServiceService {
       return;
     }
 
-    let message = 'Atendentes disponíveis:';
-
-    availableAttendants.forEach((availableAttendant) => {
-      if (message) {
-        message += '<br/><br/>';
-      }
-
-      message += `Nome: ${availableAttendant.user.name} \n\nID: ${availableAttendant.user.aadObjectId}`;
-    });
-
-    await this.msTeamsService.sendMessage(attendantId, message);
+    await this.msTeamsService.sendMessage(
+      attendantId,
+      `Escolha o atendente que deseja transferir o atendimento`,
+      availableAttendants.map((availableAttendant) => ({
+        id: availableAttendant.user.aadObjectId,
+        title: availableAttendant.user.name,
+      })),
+    );
   }
 
   async transferService(attendantId: string, attendantToTransfer: string) {
@@ -184,6 +188,52 @@ export class CustomerServiceService {
     );
   }
 
+  async registerCustomer(attendantId: string, message: string) {
+    const openedService = await this.getOpenedServiceByAttendant(attendantId);
+
+    if (!openedService) {
+      await this.msTeamsService.sendMessage(
+        attendantId,
+        'Você não está atendendo nenhum chamado no momento',
+      );
+      return;
+    }
+
+    //TODO: Verificar se o atendente pode alterar o CNPJ
+
+    const registerUserCNPJDto = new RegisterUserCNPJDto({ cnpj: message });
+    const transformedData = instanceToInstance(registerUserCNPJDto);
+
+    const validationResult = await validate(transformedData, {
+      stopAtFirstError: true,
+    });
+
+    console.log(validationResult);
+
+    if (validationResult[0]) {
+      await this.msTeamsService.sendMessage(
+        attendantId,
+        Object.values(validationResult[0].constraints)[0],
+      );
+      return;
+    }
+
+    await this.userRepository.updateByPhone(openedService.customer.phone, {
+      isCustomer: true,
+      cnpj: Number(transformedData.cnpj),
+    });
+
+    await this.msTeamsService.sendMessage(
+      attendantId,
+      'CNPJ alterado com sucesso!',
+    );
+
+    await this.whatsappService.sendMessage(
+      String(openedService.customer.phone),
+      `O atendente ${openedService.attendantName} alterou seu cadastro. Agora você é um cliente, e seu CNPJ cadastrado é ${MaskUtil.formatCNPJ(transformedData.cnpj)}`,
+    );
+  }
+
   private async notifyTransferService(
     oldAttendant: ChannelAccount,
     newAttendant: ChannelAccount,
@@ -194,7 +244,7 @@ export class CustomerServiceService {
       `O atendente ${oldAttendant.name} transferiu um atendimento a você.
         \nO nome do cliente é: ${service.customer.name} 
         \nÉ um cliente: ${service.customer.isCustomer ? 'Sim' : 'Não'} 
-        \nPortador do CNPJ: ${service.customer.cnpj ? service.customer.cnpj : 'Não consta'}
+        \nPortador do CNPJ: ${service.customer.cnpj ? MaskUtil.formatCNPJ(String(service.customer.cnpj)) : 'Não consta'}
         \nSua mensagem foi: ${service.firstMessage}`,
     );
 
@@ -240,17 +290,20 @@ export class CustomerServiceService {
   }
 
   private async openService(customer: User, message: string) {
+    const serviceGroupId = this.getGroupId(customer);
+
     const service = await this.serviceRepository.createNew({
       customer,
       status: ServiceStatusEnum.SEARCHING_ATTENDANT,
       firstMessage: message,
+      serviceGroupId,
     });
 
     await service.populate('customer');
 
     await this.whatsappService.sendMessage(
       String(customer.phone),
-      'Estamos procurando um atendente. Por favor aguarde',
+      'Estou procurando um atendente. Por favor aguarde',
     );
 
     await this.searchAttendant(service);
@@ -264,8 +317,16 @@ export class CustomerServiceService {
       ServiceStatusEnum.SEARCHING_ATTENDANT,
     );
 
+    const groupUsers = await this.msTeamsApiGraphService.getGroupMembers(
+      service.serviceGroupId,
+    );
+
+    console.log('groupUsers', groupUsers);
+
     const conversationReferencesWithoutService =
-      await this.findAvailableAttendants();
+      await this.findAvailableAttendants(
+        groupUsers.map((groupUser) => groupUser.id),
+      );
 
     if (conversationReferencesWithoutService.length > 0) {
       const chosenAttendant = this.chooseAttendantToService(
@@ -283,7 +344,7 @@ export class CustomerServiceService {
         `Você iniciou um atendimento. 
         \nO nome do cliente é: ${service.customer.name} 
         \nÉ um cliente: ${service.customer.isCustomer ? 'Sim' : 'Não'} 
-        \nPortador do CNPJ: ${service.customer.cnpj ? service.customer.cnpj : 'Não consta'}
+        \nPortador do CNPJ: ${service.customer.cnpj ? MaskUtil.formatCNPJ(String(service.customer.cnpj)) : 'Não consta'}
         \nSua mensagem foi: ${service.firstMessage}`,
       );
       await this.whatsappService.sendMessage(
@@ -298,9 +359,9 @@ export class CustomerServiceService {
     }
   }
 
-  private async findAvailableAttendants() {
+  private async findAvailableAttendants(attendantsFilteredIds?: string[]) {
     const conversationReferences =
-      await this.conversationReferenceRepository.findAll();
+      await this.conversationReferenceRepository.findAll(attendantsFilteredIds);
 
     const conversationReferencesWithoutService: ConversationReference[] = [];
     const conversationReferencesAvailable: ConversationReference[] = [];
@@ -322,8 +383,6 @@ export class CustomerServiceService {
         (conversationReference) => conversationReference.user.aadObjectId,
       ),
     );
-
-    console.log(usersStatus);
 
     conversationReferencesWithoutService.forEach((conversationReference) => {
       const userStatus = usersStatus.find(
@@ -396,8 +455,16 @@ export class CustomerServiceService {
     return conversationReferences[sortedIndexAttendant];
   }
 
+  private getGroupId(user: User) {
+    if (user.isCustomer) {
+      return ServiceGroupsIdsEnum.ATENDIMENTO;
+    }
+
+    return ServiceGroupsIdsEnum.EXPANSAO;
+  }
+
   @Cron(CronExpression.EVERY_10_SECONDS)
-  async searchAttendantToPendingServicesCron() {
+  private async searchAttendantToPendingServicesCron() {
     const pendingServices = await this.serviceRepository.findByStatus(
       ServiceStatusEnum.IN_QUEUE,
     );

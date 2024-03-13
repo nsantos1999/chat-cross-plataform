@@ -6,6 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { UserStatus } from '../constants/enums/user-status.enum';
 import { GetUsersStatusDto } from '../dtos/get-users-status.dto';
+import { GroupMember } from '../@types/group-member.types';
 
 @Injectable()
 export class MSTeamsApiGraphService {
@@ -54,10 +55,26 @@ export class MSTeamsApiGraphService {
     }
   }
 
+  async getGroupMembers(groupId: string) {
+    try {
+      const { data } = await this.apiGraph.get<{ value: GroupMember[] }>(
+        `/groups/${groupId}/members`,
+      );
+
+      // console.log(data.value.length);
+      return data.value;
+    } catch (err) {
+      console.log(err.response.data);
+
+      return [];
+      // throw new InternalServerErrorException(
+      //   `Não foi possivel buscar usuarios`,
+      // );
+    }
+  }
+
   async getUserStatus(userId: string): Promise<UserStatus> {
     try {
-      console.log(`/users/${userId}/presence`);
-
       const { data } = await this.apiGraph.get(`/users/${userId}/presence`);
 
       return data.availability;
@@ -82,41 +99,6 @@ export class MSTeamsApiGraphService {
         id: userId,
         availability: UserStatus.BUSY,
       }));
-    }
-  }
-
-  async createGroup(
-    name: string,
-    description: string,
-    members: { id: string; name: string }[],
-  ) {
-    try {
-      //   id: '28:8fe18cc0-1677-4d48-8f1d-58b83e5e6029',
-      //   name: 'Bot',
-      // },
-      // {
-      //   id: '29:1qHWJ7LvTVtaTimfNgt7Ywmz7w9AbRCCzQE5qnzQeRc0aInsdlA8CDAMlZ_xySvrvGQ5vc1troZn6Sdrf8YN0Ig',
-      //   name: 'Natã Santos',
-      // }
-      const body = {
-        description,
-        displayName: name,
-        // 'members@odata.bind': members.map(
-        //   (member) => `${this.baseGraphApi}/users/${member.id}`,
-        // ),
-        'members@odata.bind': [
-          `${this.baseGraphApi}/applications/28:8fe18cc0-1677-4d48-8f1d-58b83e5e6029`,
-          `${this.baseGraphApi}/users/29:1qHWJ7LvTVtaTimfNgt7Ywmz7w9AbRCCzQE5qnzQeRc0aInsdlA8CDAMlZ_xySvrvGQ5vc1troZn6Sdrf8YN0Ig`,
-        ],
-      };
-
-      const { data } = await this.apiGraph.post('/groups', body);
-
-      console.log(data);
-      return true;
-    } catch (err) {
-      console.log(err.response.data);
-      throw new InternalServerErrorException(`Não foi possivel criar grupo`);
     }
   }
 
