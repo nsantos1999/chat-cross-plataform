@@ -239,7 +239,9 @@ export class CustomerServiceService {
 
     await this.whatsappService.sendMessage({
       id: String(openedService.customer.phone),
-      text: `O atendente ${openedService.attendantName} alterou seu cadastro. Agora você é um cliente, e seu CNPJ cadastrado é ${MaskUtil.formatCNPJ(transformedData.cnpj)}`,
+      text: openedService.customer.isCustomer
+        ? `${openedService.attendantName} alterou seu cadastro de cliente. Seu CNPJ atual é ${MaskUtil.formatCNPJ(transformedData.cnpj)}`
+        : `${openedService.attendantName} te registrou como cliente. Seu CNPJ cadastrado é ${MaskUtil.formatCNPJ(transformedData.cnpj)}`,
     });
   }
 
@@ -336,8 +338,6 @@ export class CustomerServiceService {
     const groupUsers = await this.msTeamsApiGraphService.getGroupMembers(
       service.serviceGroupId,
     );
-
-    console.log('groupUsers', groupUsers);
 
     const conversationReferencesWithoutService =
       await this.findAvailableAttendants(

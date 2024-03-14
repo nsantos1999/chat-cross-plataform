@@ -53,7 +53,7 @@ export class MSTeamsApiGraphService {
 
       return data.value;
     } catch (err) {
-      console.log(err.response.data);
+      console.log('getGroupMembers', err.response.data);
 
       return [];
     }
@@ -86,6 +86,7 @@ export class MSTeamsApiGraphService {
   }
 
   async getUsersStatus(usersIds: string[]): Promise<GetUsersStatusDto[]> {
+    if (usersIds.length === 0) return [];
     try {
       const { data } = await this.apiGraph.post(
         `/communications/getPresencesByUserId`,

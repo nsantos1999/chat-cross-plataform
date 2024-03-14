@@ -80,7 +80,6 @@ export class WhatsAppService implements MessagerService {
     let interactiveContent: InteractiveContentButton | undefined = undefined;
 
     if (haveOptions) {
-      console.log('options');
       interactiveContent = {
         type: 'button',
         body: {

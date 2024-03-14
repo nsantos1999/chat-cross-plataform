@@ -3,12 +3,16 @@ import { User } from '../schemas/user.schema';
 import { UserRegisterStepsEnum } from '../constants/enums/user-register-steps.enum';
 import { UserRepository } from '../repositories/user.repository';
 import { validate } from 'class-validator';
-import { RegisterUserCNPJDto } from '../dtos/register-user.dtos';
+import {
+  RegisterUserCNPJDto,
+  RegisterUserIsCustomerDto,
+} from '../dtos/register-user.dtos';
 import { instanceToInstance } from 'class-transformer';
 import { QuestionToRegister } from '../@types/register.types';
 import { messagerSenderProvider } from '../providers/messager.provider';
 import { MessagerService } from './messager-sender.service';
 import { PresenterUtils } from 'src/utils/presenter.utils';
+import { UserRegisterIsCustomerEnum } from '../constants/enums/user-register-is-customer.enum';
 
 @Injectable()
 export class RegisterUserService {
@@ -148,8 +152,13 @@ export class RegisterUserService {
           registerStep: userRegisterStep,
         });
       case UserRegisterStepsEnum.ASK_IF_IS_CUSTOMER:
+        const { isCustomer } = await this.validateInputRegisterData(
+          new RegisterUserIsCustomerDto({
+            isCustomer: message as UserRegisterIsCustomerEnum,
+          }),
+        );
         return this.userRepository.updateByPhone(phone, {
-          isCustomer: message === '1',
+          isCustomer: isCustomer === UserRegisterIsCustomerEnum.SIM,
           registerStep: userRegisterStep,
         });
       case UserRegisterStepsEnum.ASK_CNPJ:
