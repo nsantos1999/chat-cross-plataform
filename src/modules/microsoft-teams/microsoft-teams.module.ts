@@ -28,7 +28,6 @@ import { ConfigService } from '@nestjs/config';
     ConfigService,
   ],
   exports: [
-    MicrosoftTeamsService,
     MSTeamsService,
     ConversationReferenceRepository,
     MSTeamsApiGraphService,

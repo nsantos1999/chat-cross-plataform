@@ -2,7 +2,6 @@ export class PresenterUtils {
   static presenterPeriodGreeting(actualDateHour = new Date()) {
     const actualHour = actualDateHour.getHours();
 
-    console.log(actualHour);
     if (actualHour < 12) {
       return 'Bom dia';
     }

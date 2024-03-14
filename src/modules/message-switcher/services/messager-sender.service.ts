@@ -3,12 +3,20 @@ export interface MessagerServiceOption {
   title: string;
 }
 
+export interface SendMessageParams {
+  id: string;
+  text: string;
+  options?: MessagerServiceOption[];
+  attachments?: Buffer[] | string[];
+}
+export interface ReceiveMessageParams {
+  id: string;
+  message: string;
+  attachments?: Buffer[] | string[];
+}
+
 export interface MessagerService {
-  sendMessage(
-    id: string,
-    text: string,
-    options?: MessagerServiceOption[],
-  ): Promise<void>;
+  sendMessage(sendMessageParams: SendMessageParams): Promise<void>;
   sendFile(id: string, file: File): Promise<void>;
-  receiveMessage(id: string, text: string): Promise<void>;
+  receiveMessage(params: ReceiveMessageParams): Promise<void>;
 }

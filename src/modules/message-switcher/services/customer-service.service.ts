@@ -60,14 +60,22 @@ export class CustomerServiceService {
     );
   }
 
-  async receiveMessageFromAttendant(attendantId: string, message: string) {
+  async receiveMessageFromAttendant({
+    attendantId,
+    message,
+    attachments,
+  }: {
+    attendantId: string;
+    message: string;
+    attachments?: Buffer[] | string[];
+  }) {
     const openedService = await this.getOpenedServiceByAttendant(attendantId);
 
     if (!openedService) {
-      await this.msTeamsService.sendMessage(
-        attendantId,
-        'Você não está atendendo nenhum chamado no momento',
-      );
+      await this.msTeamsService.sendMessage({
+        id: attendantId,
+        text: 'Você não está atendendo nenhum chamado no momento',
+      });
       return;
     }
 
@@ -79,21 +87,22 @@ export class CustomerServiceService {
       attendantName: openedService.attendantName,
       attendantAadObjectId: openedService.attendantAadObjectId,
     });
-    return this.redirectMessageToCustomer(
-      openedService.attendantName,
+    return this.redirectMessageToCustomer({
+      attendantName: openedService.attendantName,
       message,
-      openedService.customer,
-    );
+      customer: openedService.customer,
+      attachments,
+    });
   }
 
   async finishService(attendantId: string) {
     const openedService = await this.getOpenedServiceByAttendant(attendantId);
 
     if (!openedService) {
-      await this.msTeamsService.sendMessage(
-        attendantId,
-        'Você não está atendendo nenhum chamado no momento',
-      );
+      await this.msTeamsService.sendMessage({
+        id: attendantId,
+        text: 'Você não está atendendo nenhum chamado no momento',
+      });
       return;
     }
 
@@ -103,46 +112,46 @@ export class CustomerServiceService {
       openedService._id,
     );
 
-    await this.msTeamsService.sendMessage(
-      attendantId,
-      `O atendimento foi finalizado. O tempo de SLA foi de ${updatedService.slaMinutes} minutos`,
-    );
+    await this.msTeamsService.sendMessage({
+      id: attendantId,
+      text: `O atendimento foi finalizado. O tempo de SLA foi de ${updatedService.slaMinutes} minutos`,
+    });
 
-    await this.whatsappService.sendMessage(
-      String(openedService.customer.phone),
-      `Seu atendimento foi encessado por ${openedService.attendantName}.`,
-    );
+    await this.whatsappService.sendMessage({
+      id: String(openedService.customer.phone),
+      text: `Seu atendimento foi encessado por ${openedService.attendantName}.`,
+    });
   }
 
   async listAvailableAttendants(attendantId: string) {
     const availableAttendants = await this.findAvailableAttendants();
 
     if (availableAttendants.length === 0) {
-      await this.msTeamsService.sendMessage(
-        attendantId,
-        'Nenhum atendente disponível no momento',
-      );
+      await this.msTeamsService.sendMessage({
+        id: attendantId,
+        text: 'Nenhum atendente disponível no momento',
+      });
       return;
     }
 
-    await this.msTeamsService.sendMessage(
-      attendantId,
-      `Escolha o atendente que deseja transferir o atendimento`,
-      availableAttendants.map((availableAttendant) => ({
+    await this.msTeamsService.sendMessage({
+      id: attendantId,
+      text: `Escolha o atendente que deseja transferir o atendimento`,
+      options: availableAttendants.map((availableAttendant) => ({
         id: availableAttendant.user.aadObjectId,
         title: availableAttendant.user.name,
       })),
-    );
+    });
   }
 
   async transferService(attendantId: string, attendantToTransfer: string) {
     const openedService = await this.getOpenedServiceByAttendant(attendantId);
 
     if (!openedService) {
-      await this.msTeamsService.sendMessage(
-        attendantId,
-        'Você não está atendendo nenhum chamado no momento',
-      );
+      await this.msTeamsService.sendMessage({
+        id: attendantId,
+        text: 'Você não está atendendo nenhum chamado no momento',
+      });
       return;
     }
 
@@ -155,10 +164,10 @@ export class CustomerServiceService {
       );
 
     if (!conversationReferenteOfNewAttendant) {
-      await this.msTeamsService.sendMessage(
-        attendantId,
-        `Não encontramos este usuários`,
-      );
+      await this.msTeamsService.sendMessage({
+        id: attendantId,
+        text: `Não encontramos este usuários`,
+      });
       return;
     }
 
@@ -167,10 +176,10 @@ export class CustomerServiceService {
     );
 
     if (!attendantToTransferIsAvailable) {
-      await this.msTeamsService.sendMessage(
-        attendantId,
-        `O atendente ${conversationReferenteOfNewAttendant.user.name} não está disponível no momento`,
-      );
+      await this.msTeamsService.sendMessage({
+        id: attendantId,
+        text: `O atendente ${conversationReferenteOfNewAttendant.user.name} não está disponível no momento`,
+      });
       return;
     }
 
@@ -192,10 +201,10 @@ export class CustomerServiceService {
     const openedService = await this.getOpenedServiceByAttendant(attendantId);
 
     if (!openedService) {
-      await this.msTeamsService.sendMessage(
-        attendantId,
-        'Você não está atendendo nenhum chamado no momento',
-      );
+      await this.msTeamsService.sendMessage({
+        id: attendantId,
+        text: 'Você não está atendendo nenhum chamado no momento',
+      });
       return;
     }
 
@@ -211,10 +220,10 @@ export class CustomerServiceService {
     console.log(validationResult);
 
     if (validationResult[0]) {
-      await this.msTeamsService.sendMessage(
-        attendantId,
-        Object.values(validationResult[0].constraints)[0],
-      );
+      await this.msTeamsService.sendMessage({
+        id: attendantId,
+        text: Object.values(validationResult[0].constraints)[0],
+      });
       return;
     }
 
@@ -223,15 +232,15 @@ export class CustomerServiceService {
       cnpj: Number(transformedData.cnpj),
     });
 
-    await this.msTeamsService.sendMessage(
-      attendantId,
-      'CNPJ alterado com sucesso!',
-    );
+    await this.msTeamsService.sendMessage({
+      id: attendantId,
+      text: 'CNPJ alterado com sucesso!',
+    });
 
-    await this.whatsappService.sendMessage(
-      String(openedService.customer.phone),
-      `O atendente ${openedService.attendantName} alterou seu cadastro. Agora você é um cliente, e seu CNPJ cadastrado é ${MaskUtil.formatCNPJ(transformedData.cnpj)}`,
-    );
+    await this.whatsappService.sendMessage({
+      id: String(openedService.customer.phone),
+      text: `O atendente ${openedService.attendantName} alterou seu cadastro. Agora você é um cliente, e seu CNPJ cadastrado é ${MaskUtil.formatCNPJ(transformedData.cnpj)}`,
+    });
   }
 
   private async notifyTransferService(
@@ -239,24 +248,24 @@ export class CustomerServiceService {
     newAttendant: ChannelAccount,
     service: Service,
   ) {
-    await this.msTeamsService.sendMessage(
-      newAttendant.id,
-      `O atendente ${oldAttendant.name} transferiu um atendimento a você.
+    await this.msTeamsService.sendMessage({
+      id: newAttendant.id,
+      text: `O atendente ${oldAttendant.name} transferiu um atendimento a você.
         \nO nome do cliente é: ${service.customer.name} 
         \nÉ um cliente: ${service.customer.isCustomer ? 'Sim' : 'Não'} 
         \nPortador do CNPJ: ${service.customer.cnpj ? MaskUtil.formatCNPJ(String(service.customer.cnpj)) : 'Não consta'}
         \nSua mensagem foi: ${service.firstMessage}`,
-    );
+    });
 
-    await this.msTeamsService.sendMessage(
-      oldAttendant.id,
-      `O atendente ${newAttendant.name} recebeu o atendimento e irá continuar`,
-    );
+    await this.msTeamsService.sendMessage({
+      id: oldAttendant.id,
+      text: `O atendente ${newAttendant.name} recebeu o atendimento e irá continuar`,
+    });
 
-    await this.whatsappService.sendMessage(
-      String(service.customer.phone),
-      `O atendimento foi transferido. Quem irá te atender agora é ${newAttendant.name}`,
-    );
+    await this.whatsappService.sendMessage({
+      id: String(service.customer.phone),
+      text: `O atendimento foi transferido. Quem irá te atender agora é ${newAttendant.name}`,
+    });
   }
 
   private getOpenedServiceByCustomer(customer: UserDocument) {
@@ -272,21 +281,28 @@ export class CustomerServiceService {
     message: string,
     attendantId: string,
   ) {
-    this.msTeamsService.sendMessage(
-      attendantId,
-      `${customer.name} disse: <br/><br/>${message}`,
-    );
+    this.msTeamsService.sendMessage({
+      id: attendantId,
+      text: `${customer.name} disse: <br/><br/>${message}`,
+    });
   }
 
-  private async redirectMessageToCustomer(
-    attendantName: string,
-    message: string,
-    customer: User,
-  ) {
-    this.whatsappService.sendMessage(
-      String(customer.phone),
-      `${attendantName} disse: \n\n${message}`,
-    );
+  private async redirectMessageToCustomer({
+    attendantName,
+    message,
+    customer,
+    attachments,
+  }: {
+    attendantName: string;
+    message: string;
+    customer: User;
+    attachments?: Buffer[] | string[];
+  }) {
+    this.whatsappService.sendMessage({
+      id: String(customer.phone),
+      text: `${attendantName} disse: \n\n${message}`,
+      attachments,
+    });
   }
 
   private async openService(customer: User, message: string) {
@@ -301,10 +317,10 @@ export class CustomerServiceService {
 
     await service.populate('customer');
 
-    await this.whatsappService.sendMessage(
-      String(customer.phone),
-      'Estou procurando um atendente. Por favor aguarde',
-    );
+    await this.whatsappService.sendMessage({
+      id: String(customer.phone),
+      text: 'Estou procurando um atendente. Por favor aguarde',
+    });
 
     await this.searchAttendant(service);
 
@@ -339,18 +355,19 @@ export class CustomerServiceService {
         attendantAadObjectId: chosenAttendant.user.aadObjectId,
       });
 
-      await this.msTeamsService.sendMessage(
-        chosenAttendant.user.id,
-        `Você iniciou um atendimento. 
-        \nO nome do cliente é: ${service.customer.name} 
-        \nÉ um cliente: ${service.customer.isCustomer ? 'Sim' : 'Não'} 
-        \nPortador do CNPJ: ${service.customer.cnpj ? MaskUtil.formatCNPJ(String(service.customer.cnpj)) : 'Não consta'}
-        \nSua mensagem foi: ${service.firstMessage}`,
-      );
-      await this.whatsappService.sendMessage(
-        String(service.customer.phone),
-        `${chosenAttendant.user.name} iniciou seu atendimento`,
-      );
+      await this.msTeamsService.sendMessage({
+        id: chosenAttendant.user.id,
+        text: `Você iniciou um atendimento. 
+          \nO nome do cliente é: ${service.customer.name} 
+          \nÉ um cliente: ${service.customer.isCustomer ? 'Sim' : 'Não'} 
+          \nPortador do CNPJ: ${service.customer.cnpj ? MaskUtil.formatCNPJ(String(service.customer.cnpj)) : 'Não consta'}
+          \nSua mensagem foi: ${service.firstMessage}`,
+      });
+
+      await this.whatsappService.sendMessage({
+        id: String(service.customer.phone),
+        text: `${chosenAttendant.user.name} iniciou seu atendimento`,
+      });
     } else {
       await this.serviceRepository.changeStatus(
         service._id,

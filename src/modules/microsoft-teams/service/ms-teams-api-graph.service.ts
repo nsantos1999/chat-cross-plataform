@@ -32,20 +32,10 @@ export class MSTeamsApiGraphService {
 
   async getUsers() {
     try {
-      // const { data } = await this.apiGraph.get(
-      //   `/groups/03a4da3d-435d-471b-8f71-16771203e9a9/members`,
-      // );
-      // 9a5ca47c-031b-44d6-a3fc-2e4580409cb2 - testeexpanso@rmfarma.com.br
-      // a2dc799a-885c-4afa-89b3-e44c738bef60 - testeatendimento@rmfarma.com.br
-      // const { data } = await this.apiGraph.get(
-      //   `/groups/a2dc799a-885c-4afa-89b3-e44c738bef60/members`,
-      // );
-
       const { data } = await this.apiGraph.get(
         `/users/c3b85288-6ddd-46d1-bc02-baccb8cc8c58/presence`,
       );
 
-      // console.log(data.value.length);
       return data;
     } catch (err) {
       console.log(err.response.data);
@@ -61,15 +51,26 @@ export class MSTeamsApiGraphService {
         `/groups/${groupId}/members`,
       );
 
-      // console.log(data.value.length);
       return data.value;
     } catch (err) {
       console.log(err.response.data);
 
       return [];
-      // throw new InternalServerErrorException(
-      //   `Não foi possivel buscar usuarios`,
-      // );
+    }
+  }
+
+  async downloadAttachmentFile(link: string) {
+    try {
+      const { data } = await this.apiGraph.get(link, {
+        responseType: 'arraybuffer',
+      });
+
+      // console.log(data.value.length);
+      return Buffer.from(data, 'binary');
+    } catch (err) {
+      console.log(err.response.data);
+
+      return null;
     }
   }
 
@@ -108,12 +109,11 @@ export class MSTeamsApiGraphService {
       scopes: ['https://graph.microsoft.com/.default'],
     });
 
-    console.log(token);
     this.apiGraph.defaults.headers['Authorization'] =
       `Bearer ${token.accessToken}`;
   }
 
-  @Cron(CronExpression.EVERY_30_MINUTES)
+  @Cron(CronExpression.EVERY_10_MINUTES)
   private refreshTokenCron() {
     this.generateTokenAndRegistrationNewToken();
   }

@@ -47,10 +47,11 @@ export class RegisterUserService {
           registerStep: nextStep,
         });
       } catch (err) {
-        await this.whatsappService.sendMessage(
-          String(user.phone),
-          err?.message || 'Há algo de errado com os dados. Tente novamente',
-        );
+        await this.whatsappService.sendMessage({
+          id: String(user.phone),
+          text:
+            err?.message || 'Há algo de errado com os dados. Tente novamente',
+        });
       }
     }
 

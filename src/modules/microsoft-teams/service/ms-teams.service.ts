@@ -2,19 +2,18 @@ import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import {
   MessagerService,
   MessagerServiceOption,
+  ReceiveMessageParams,
+  SendMessageParams,
 } from 'src/modules/message-switcher/services/messager-sender.service';
 import { MessagerEnum } from 'src/modules/message-switcher/constants/enums/messager.enum';
 import { MessageSwitcherService } from 'src/modules/message-switcher/services/message-switcher.service';
 import {
-  ActionTypes,
   Activity,
   ActivityHandler,
-  CardAction,
   CardFactory,
   CloudAdapter,
   ConfigurationServiceClientCredentialFactory,
   ConversationReference,
-  MessageFactory,
   TurnContext,
   createBotFrameworkAuthenticationFromConfiguration,
 } from 'botbuilder';
@@ -52,7 +51,6 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
     this.adapter = new CloudAdapter(botFrameworkAuthentication);
 
     this.startListeners();
-    // console.log(this.adapter);
   }
 
   getAdapter() {
@@ -63,49 +61,57 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
     // See https://aka.ms/about-bot-activity-message to learn more about the message and other activity types.
     this.onMessage(async (context, next) => {
       console.log('received message', context.activity.text);
-      // const replyText = `Echo: ${context.activity.text}`;
-      // console.log(context);
-      // await context.sendActivity(MessageFactory.text(replyText, replyText));
+
       await this.addConversationReference(context.activity);
 
-      this.receiveMessage(
-        context.activity.from.id,
-        context.activity?.value?.option || context.activity.text,
-      );
+      const attachments: Buffer[] | string[] = [];
 
-      // By calling next() you ensure that the next BotHandler is run.
+      if (
+        context.activity.attachments &&
+        context.activity.attachments.length > 0
+      ) {
+        let handleError = false;
+        for (const attachment of context.activity.attachments.filter(
+          (attachment) => attachment.contentType !== 'text/html',
+        )) {
+          if (!attachment.content) {
+            await context.sendActivity(
+              `O arquivo enviado não é suportado. Caso tenha colado imagem no campo de mensagem, por favor, anexe-á`,
+            );
+            handleError = true;
+          } else {
+            attachments.push(attachment.content.downloadUrl);
+          }
+        }
+
+        if (handleError) {
+          await next();
+          return;
+        }
+      }
+
+      await this.receiveMessage({
+        id: context.activity.from.id,
+        message: context.activity?.value?.option || context.activity.text,
+        attachments,
+      });
       await next();
     });
 
     this.onMembersAdded(async (context, next) => {
-      // const replyText = `Echo: ${context.activity.text}`;
-      // console.log(context);
-      // await context.sendActivity(MessageFactory.text(replyText, replyText));
-
       await this.addConversationReference(context.activity);
 
       await context.sendActivity(
         `Olá! Registrei aqui seu usuário para receber mensagens. Seu ID de usuário é: ${context.activity.from.id}`,
       );
-      // By calling next() you ensure that the next BotHandler is run.
       await next();
     });
     this.onCommand(async (context, next) => {
-      console.log('received command');
-      // const replyText = `Echo: ${context.activity.text}`;
-      // console.log(context);
-      // await context.sendActivity(MessageFactory.text(replyText, replyText));
-      console.log(context.activity);
-      // By calling next() you ensure that the next BotHandler is run.
       await next();
     });
   }
 
-  async sendMessage(
-    id: string,
-    text: string,
-    options?: MessagerServiceOption[],
-  ): Promise<void> {
+  async sendMessage({ id, text, options }: SendMessageParams): Promise<void> {
     const conversationReference =
       await this.conversationReferenceRepository.findByUser(id);
 
@@ -130,7 +136,7 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
     // throw new Error('Method not implemented.');
   }
 
-  async sendFile(id: string, file: File): Promise<void> {
+  async sendFile(id: string): Promise<void> {
     const conversationReference =
       await this.conversationReferenceRepository.findByUser(id);
 
@@ -152,12 +158,13 @@ export class MSTeamsService extends ActivityHandler implements MessagerService {
     );
   }
 
-  async receiveMessage(id: string, message: string) {
-    this.messageSwitcherService.receiveMessage(
+  async receiveMessage({ id, message, attachments }: ReceiveMessageParams) {
+    this.messageSwitcherService.receiveMessage({
       id,
       message,
-      MessagerEnum.MS_TEAMS,
-    );
+      from: MessagerEnum.MS_TEAMS,
+      attachments,
+    });
   }
 
   private buildAdaptiveCardWithOptions(

@@ -23,11 +23,29 @@ export class MessageSwitcherService {
     private readonly customerServiceService: CustomerServiceService,
   ) {}
 
-  receiveMessage(id: string, message: string, from: MessagerEnum) {
+  receiveMessage({
+    id,
+    message,
+    from,
+    attachments,
+  }: {
+    id: string;
+    message: string;
+    from: MessagerEnum;
+    attachments?: Buffer[] | string[];
+  }) {
     if (from === MessagerEnum.MS_TEAMS) {
-      return this.receiveMessageFromMSTeams(id, message);
+      return this.receiveMessageFromMSTeams({
+        id,
+        message,
+        attachments,
+      });
     } else {
-      return this.receiveMessageFromWhatsapp(id, message);
+      return this.receiveMessageFromWhatsapp({
+        id,
+        message,
+        attachments,
+      });
     }
   }
 
@@ -45,7 +63,14 @@ export class MessageSwitcherService {
     return { firstInteraction: false, user };
   }
 
-  private async receiveMessageFromWhatsapp(phone: string, message: string) {
+  private async receiveMessageFromWhatsapp({
+    id: phone,
+    message,
+  }: {
+    id: string;
+    message: string;
+    attachments?: Buffer[] | string[];
+  }) {
     const { firstInteraction, user } = await this.isFirstInteraction(phone);
 
     const userRegistered = this.registerUserService.userRegistered(user);
@@ -58,7 +83,11 @@ export class MessageSwitcherService {
           firstInteraction,
         );
 
-      await this.whatsappService.sendMessage(phone, question, options);
+      await this.whatsappService.sendMessage({
+        id: phone,
+        text: question,
+        options,
+      });
 
       return;
     }
@@ -66,8 +95,16 @@ export class MessageSwitcherService {
     await this.customerServiceService.receiveMessageFromCustomer(user, message);
   }
 
-  private async receiveMessageFromMSTeams(id: string, message: string) {
-    const messageCleaned = message.trim();
+  private async receiveMessageFromMSTeams({
+    id,
+    message,
+    attachments,
+  }: {
+    id: string;
+    message: string;
+    attachments?: Buffer[] | string[];
+  }) {
+    const messageCleaned = String(message || '').trim();
 
     const { isCommand, command, extraDataCommand } =
       this.isCommand(messageCleaned);
@@ -75,10 +112,11 @@ export class MessageSwitcherService {
     if (isCommand) {
       await this.executeCommandAction(command, extraDataCommand, id);
     } else {
-      await this.customerServiceService.receiveMessageFromAttendant(
-        id,
-        messageCleaned,
-      );
+      await this.customerServiceService.receiveMessageFromAttendant({
+        attendantId: id,
+        message: messageCleaned,
+        attachments,
+      });
     }
   }
 
@@ -122,18 +160,16 @@ export class MessageSwitcherService {
           attendantId,
           extraDataCommand,
         );
-      case MappedCommands.GET_MESSAGES_SERVICE:
-        return this.msTeamsService.sendFile(attendantId, null);
       case MappedCommands.TRANSFER_SERVICE:
         return this.customerServiceService.transferService(
           attendantId,
           extraDataCommand,
         );
       default:
-        return this.msTeamsService.sendMessage(
-          attendantId,
-          `O comando ${command} ainda está indisponível`,
-        );
+        return this.msTeamsService.sendMessage({
+          id: attendantId,
+          text: `O comando ${command} ainda está indisponível`,
+        });
     }
   }
 }

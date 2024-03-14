@@ -18,14 +18,11 @@ import {
 } from './schemas/service-attendant-histories.schema';
 import { ServiceAttendantsHistoriesRepository } from './repositories/service-attendant-histories.repository';
 // import { WhatsAppService } from '../whatsapp/services/whatsapp.service';
-// import { MicrosoftTeamsService } from '../microsoft-teams/service/microsoft-teams.service';
 
 @Module({
   controllers: [],
   providers: [
     MessageSwitcherService,
-    // WhatsAppService,
-    // MicrosoftTeamsService,
     messagerSenderProvider.MessagerSender1,
     messagerSenderProvider.MessagerSender2,
     UserRepository,
