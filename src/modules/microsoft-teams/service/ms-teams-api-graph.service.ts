@@ -1,4 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 
 import { ConfidentialClientApplication } from '@azure/msal-node';
@@ -116,6 +120,7 @@ export class MSTeamsApiGraphService {
 
   @Cron(CronExpression.EVERY_10_MINUTES)
   private refreshTokenCron() {
+    Logger.log('Refresh token Graph API...');
     this.generateTokenAndRegistrationNewToken();
   }
 }
