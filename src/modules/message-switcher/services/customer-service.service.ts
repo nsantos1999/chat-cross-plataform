@@ -119,7 +119,7 @@ export class CustomerServiceService {
 
     await this.whatsappService.sendMessage({
       id: String(openedService.customer.phone),
-      text: `Seu atendimento foi encessado por ${openedService.attendantName}.`,
+      text: `Seu atendimento foi encerrado por ${openedService.attendantName}.`,
     });
   }
 
